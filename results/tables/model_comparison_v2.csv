@@ -1,0 +1,5 @@
+model,algorithm_family,train_rows,cv_top1_accuracy,cv_top1_fold_std,cv_macro_f1,cv_log_loss,test_top1_accuracy,test_macro_f1,test_precision,test_recall,test_log_loss,test_route_continuity,train_seconds,inference_seconds
+lightgbm,Boosting (LightGBM),1796686,0.871,0.0172,0.927,0.0804,0.8447,0.9203,0.8498,0.8614,0.0761,0.9277,41.25,2.7
+logistic_regression,Linear,400000,0.8659,0.017,0.9225,0.0838,0.8508,0.9164,0.846,0.851,0.0767,0.9272,0.53,0.021
+gaussian_nb,Probabilistic generative,1796686,0.8391,0.02,0.8017,1.0181,0.8159,0.801,0.4976,0.964,0.9702,0.9159,0.6,0.049
+decision_tree,Tree,1796686,0.8653,0.0169,0.9215,0.1089,0.8502,0.9171,0.8564,0.8428,0.0818,0.9337,47.24,0.011

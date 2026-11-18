@@ -1,0 +1,21 @@
+{
+  "model": "lightgbm_v2_dp",
+  "labels": "chronological (DP-aligned)",
+  "grid_configs_evaluated": 38,
+  "selected_params": {
+    "classifier_weight": 0.0,
+    "sigma": 10.0,
+    "p_other": 1e-06,
+    "p_stay": 0.7,
+    "p_conn": 0.25,
+    "gap_threshold_s": 30.0,
+    "p_uturn": 0.001
+  },
+  "test_classifier_only_top1": 0.8878,
+  "test_classifier_only_top1_vs_proxy_labels": 0.8527,
+  "test_pure_hmm_top1": 0.915,
+  "test_pure_hmm_continuity": 0.9978,
+  "test_classifier_hmm_top1": 0.915,
+  "test_classifier_hmm_continuity": 0.9978,
+  "test_classifier_hmm_top1_vs_proxy_labels": 0.877
+}

@@ -1,0 +1,9 @@
+  fold 0: top1=0.8746
+  fold 1: top1=0.8751
+  fold 2: top1=0.9037
+  fold 3: top1=0.9048
+  fold 4: top1=0.8697
+{'model': 'lightgbm', 'algorithm_family': 'Boosting (LightGBM)', 'labels': 'dp', 'test_top1_vs_proxy_labels': 0.8527, 'train_rows': 1796686, 'cv_top1_accuracy': 0.8851, 'cv_top1_fold_std': 0.0153, 'cv_macro_f1': 0.9343, 'cv_log_loss': 0.0666, 'test_top1_accuracy': 0.8878, 'test_macro_f1': 0.9379, 'test_precision': 0.8892, 'test_recall': 0.8854, 'test_log_loss': 0.0515, 'test_route_continuity': 0.955, 'train_seconds': 40.7, 'inference_seconds': 2.971}
+   model    algorithm_family labels  test_top1_vs_proxy_labels  train_rows  cv_top1_accuracy  cv_top1_fold_std  cv_macro_f1  cv_log_loss  test_top1_accuracy  test_macro_f1  test_precision  test_recall  test_log_loss  test_route_continuity  train_seconds  inference_seconds
+
+[exited with code 0]

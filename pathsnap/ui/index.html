@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PathSnap: Distributed Map-Matching & Route Reconstruction</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <!-- Modern System Font Styles -->
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --accent: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    
+    header {
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary); letter-spacing: -0.5px; }
+    .badge { background: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+    
+    .main-container { display: flex; flex: 1; overflow: hidden; }
+    
+    /* Sidebar controls */
+    .sidebar {
+      width: 380px;
+      background: var(--card-bg);
+      border-right: 1px solid var(--border);
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .panel-card h3 { font-size: 0.875rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-group:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 0.8rem; font-weight: 500; margin-bottom: 4px; color: var(--text); }
+    input, select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      background: #fff;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); ring: 2px var(--primary); }
+    
+    .btn {
+      width: 100%;
+      padding: 10px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn:disabled { background: var(--text-muted); cursor: not-allowed; }
+    .btn-secondary { background: #e2e8f0; color: #334155; margin-top: 6px; }
+    .btn-secondary:hover { background: #cbd5e1; }
+    
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .metric-box {
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .metric-value { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+    .metric-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+
+    /* Map container */
+    .map-container { flex: 1; position: relative; background: #e5e7eb; }
+    #map { width: 100%; height: 100%; }
+    
+    /* Log drawer */
+    .log-box {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+      font-size: 0.75rem;
+      background: #0f172a;
+      color: #38bdf8;
+      padding: 10px;
+      border-radius: 6px;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <h1>PathSnap</h1>
+      <span class="badge">PES Hackathon Evaluator Interface</span>
+    </div>
+    <div style="font-size: 0.85rem; color: var(--text-muted);" id="connection-status">
+      Status: Checking...
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Connection Card -->
+      <div class="panel-card">
+        <h3>Backend Connection (Laptop 1)</h3>
+        <div class="form-group">
+          <label for="api-url">API Endpoint URL</label>
+          <input type="text" id="api-url" value="http://localhost:8000">
+        </div>
+        <button class="btn btn-secondary" onclick="checkHealth()">Connect & Refresh</button>
+      </div>
+
+      <!-- Trip Selector Card -->
+      <div class="panel-card">
+        <h3>Evaluation Setup</h3>
+        <div class="form-group">
+          <label for="partition-select">Target Partition</label>
+          <select id="partition-select" onchange="loadTrips()">
+            <option value="student_test">Student Testing (10 Trips)</option>
+            <option value="evaluator_test">Evaluator Testing (10 Reserved Trips)</option>
+            <option value="train">Training (80 Trips)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="trip-select">Select Trip</label>
+          <select id="trip-select">
+            <option value="">Loading trips...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="mode-select">Reconstruction Decoder Mode</label>
+          <select id="mode-select">
+            <option value="hybrid">Classifier + HMM Viterbi (Recommended)</option>
+            <option value="classifier_only">Classifier Top-1 Only (Pointwise)</option>
+            <option value="hmm_only">Pure Distance HMM</option>
+          </select>
+        </div>
+        <button class="btn" id="predict-btn" onclick="runPrediction()">
+          <span>Predict Route</span>
+        </button>
+      </div>
+
+      <!-- Results Card -->
+      <div class="panel-card">
+        <h3>Evaluation Results</h3>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-value" id="res-acc">--</div>
+            <div class="metric-label">Server Top-1 Acc</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="res-cont">--</div>
+            <div class="metric-label">Route Continuity</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="res-time">--</div>
+            <div class="metric-label">Latency (s)</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-value" id="res-pts">--</div>
+            <div class="metric-label">Observations</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Logs -->
+      <div class="panel-card">
+        <h3>API Response Log</h3>
+        <div class="log-box" id="log-box">Ready. Connect to API to start evaluation.</div>
+      </div>
+    </div>
+
+    <!-- Interactive Map -->
+    <div class="map-container">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    let map = null;
+    let gpsLayer = null;
+    let refLayer = null;
+    let predLayer = null;
+
+    function initMap() {
+      map = L.map('map').setView([50.1109, 8.6821], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      gpsLayer = L.featureGroup().addTo(map);
+      refLayer = L.featureGroup().addTo(map);
+      predLayer = L.featureGroup().addTo(map);
+
+      const overlayMaps = {
+        "Raw GPS Observations": gpsLayer,
+        "Ground Truth Reference Route": refLayer,
+        "Predicted Matched Path": predLayer
+      };
+      L.control.layers(null, overlayMaps, { collapsed: false }).addTo(map);
+    }
+
+    function log(msg) {
+      const box = document.getElementById('log-box');
+      const time = new Date().toLocaleTimeString();
+      box.textContent = `[${time}] ${msg}\n` + box.textContent;
+    }
+
+    async function checkHealth() {
+      const base = document.getElementById('api-url').value.trim();
+      const statusEl = document.getElementById('connection-status');
+      statusEl.textContent = 'Status: Connecting...';
+      try {
+        const res = await fetch(`${base}/health`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        statusEl.innerHTML = `Status: <span style="color:var(--success);font-weight:600">Connected (${data.model})</span>`;
+        log(`Connected to API. Model: ${data.model}, Available trips: ${data.available_trips_count}`);
+        await loadTrips();
+      } catch (err) {
+        statusEl.innerHTML = `Status: <span style="color:#ef4444;font-weight:600">Offline (${err.message})</span>`;
+        log(`Connection failed: ${err.message}`);
+      }
+    }
+
+    async function loadTrips() {
+      const base = document.getElementById('api-url').value.trim();
+      const partition = document.getElementById('partition-select').value;
+      const select = document.getElementById('trip-select');
+      select.innerHTML = '<option value="">Loading...</option>';
+
+      try {
+        const res = await fetch(`${base}/trips?partition=${partition}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        select.innerHTML = '';
+        data.trips.forEach(t => {
+          const opt = document.createElement('option');
+          opt.value = t;
+          opt.textContent = `Trip ${t}`;
+          select.appendChild(opt);
+        });
+        log(`Loaded ${data.trips.length} trips from partition '${partition}'`);
+      } catch (err) {
+        select.innerHTML = '<option value="">Error loading trips</option>';
+        log(`Error loading trips: ${err.message}`);
+      }
+    }
+
+    async function runPrediction() {
+      const base = document.getElementById('api-url').value.trim();
+      const trip = document.getElementById('trip-select').value;
+      const mode = document.getElementById('mode-select').value;
+      const partition = document.getElementById('partition-select').value;
+      const btn = document.getElementById('predict-btn');
+
+      if (!trip) {
+        alert("Please select a trip first.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Processing Inference...";
+      log(`Sending predict request for trip ${trip} (mode: ${mode})...`);
+
+      try {
+        const res = await fetch(`${base}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trip_id: trip,
+            mode: mode,
+            data_partition: partition
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Update Metrics Cards
+        document.getElementById('res-acc').textContent = data.server_side_accuracy !== null 
+          ? (data.server_side_accuracy * 100).toFixed(1) + '%' 
+          : 'N/A';
+        document.getElementById('res-cont').textContent = (data.route_continuity * 100).toFixed(1) + '%';
+        document.getElementById('res-time').textContent = data.inference_seconds + 's';
+        document.getElementById('res-pts').textContent = data.num_observations;
+
+        log(`Received prediction: ${data.num_observations} obs in ${data.inference_seconds}s. Continuity: ${(data.route_continuity*100).toFixed(1)}%`);
+
+        // Render on map
+        renderResults(data);
+      } catch (err) {
+        log(`Prediction failed: ${err.message}`);
+        alert(`Prediction failed: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Predict Route";
+      }
+    }
+
+    function renderResults(data) {
+      gpsLayer.clearLayers();
+      predLayer.clearLayers();
+
+      const latlngs = [];
+      data.points.forEach((p, idx) => {
+        const coord = [p.lat, p.lon];
+        latlngs.push(coord);
+
+        // Add GPS dots (sampled to maintain performance)
+        if (idx % 2 === 0) {
+          L.circleMarker(coord, {
+            radius: 3,
+            color: '#2563eb',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.7,
+            weight: 1
+          }).bindPopup(`<b>Observation ${p.obs}</b><br>Matched Arc: ${p.matched_arc}`).addTo(gpsLayer);
+        }
+      });
+
+      // GPS trajectory polyline (blue)
+      L.polyline(latlngs, {
+        color: '#3b82f6',
+        weight: 2,
+        opacity: 0.6,
+        dashArray: '4, 4'
+      }).addTo(gpsLayer);
+
+      // Predicted Route polyline (solid emerald/green)
+      L.polyline(latlngs, {
+        color: '#10b981',
+        weight: 4,
+        opacity: 0.9
+      }).addTo(predLayer);
+
+      if (latlngs.length > 0) {
+        map.fitBounds(L.latLngBounds(latlngs), { padding: [30, 30] });
+      }
+    }
+
+    // Startup
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      checkHealth();
+    });
+  </script>
+</body>
+</html>

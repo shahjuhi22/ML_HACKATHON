@@ -1,0 +1,17 @@
+# scikit-learn 1.9.1 loads every model file in artifacts/models.
+# (1.6.1 also runs the API with hgb_tuned, but cannot load logistic_regression.joblib.)
+scikit-learn==1.9.1
+numpy
+pandas
+scipy
+joblib
+lightgbm
+xgboost
+optuna
+fastapi
+uvicorn
+httpx
+folium
+matplotlib
+reportlab
+pytest

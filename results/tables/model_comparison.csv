@@ -1,0 +1,6 @@
+model,algorithm_family,key_configuration,cv_top1_accuracy,cv_macro_f1,test_top1_accuracy,test_macro_f1,precision,recall,log_loss,route_continuity,candidate_miss_rate,train_seconds,inference_seconds
+logistic_regression,Linear / Probabilistic,"StandardScaler + LogisticRegression(C=1.0, max_iter=500)",0.7408,0.7699,0.757,0.7807,0.8266,0.7484,0.1621,0.8743,0.0149,1.02,0.018
+gaussian_nb,Probabilistic Generative,StandardScaler + GaussianNB(var_smoothing=1e-9),0.7105,0.7552,0.7152,0.7667,0.772,0.7616,0.311,0.8691,0.0149,0.347,0.044
+decision_tree,Tree-Based Non-Linear,"DecisionTreeClassifier(max_depth=12, min_samples_leaf=50)",0.7092,0.7941,0.7224,0.8108,0.8468,0.7831,0.1482,0.8743,0.0149,9.556,0.018
+random_forest,Ensemble Bagging,"RandomForestClassifier(n_estimators=100, max_depth=14, min_samples_leaf=20)",0.7213,0.7973,0.7314,0.8109,0.8532,0.7796,0.1407,0.882,0.0149,192.1,0.711
+hist_gradient_boosting,Gradient Boosting,"HistGradientBoostingClassifier(max_iter=200, learning_rate=0.05, max_leaf_nodes=31)",0.7216,0.7987,0.7335,0.8112,0.8515,0.781,0.1407,0.8822,0.0149,29.257,1.085

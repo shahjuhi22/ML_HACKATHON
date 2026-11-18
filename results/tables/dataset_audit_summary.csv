@@ -1,0 +1,16 @@
+,student_test,train
+trips,10.0,80.0
+gps_rows_median,1420.0,1529.0
+gps_rows_max,3958.0,19313.0
+route_arcs_median,250.0,280.0
+nodes_median,6596.5,9608.0
+arcs_median,13145.0,19526.5
+pct_1s_steps_mean,98.199,93.829625
+max_gap_s,210.0,153064.0
+candidate_miss_rate_mean,0.01495,0.018166250000000002
+obs_no_candidate_total,67.0,18874.0
+nan_total,0.0,0.0
+bad_coords_total,0.0,0.0
+non_increasing_time_total,0.0,0.0
+arc_refs_bad_total,0.0,0.0
+route_bad_total,0.0,0.0

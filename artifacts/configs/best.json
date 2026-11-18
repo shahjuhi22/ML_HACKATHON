@@ -1,0 +1,22 @@
+{
+  "best_model": "hgb_tuned",
+  "algorithm_family": "Gradient Boosting (HistGradientBoosting)",
+  "features": [
+    "dist",
+    "hd",
+    "alen",
+    "speed",
+    "dt"
+  ],
+  "selected_by": "3-fold GroupKFold Top-1 Accuracy with Optuna TPESampler",
+  "cv_top1_score": 0.6893,
+  "test_top1_score": 0.7314,
+  "best_params": {
+    "learning_rate": 0.021016465030475086,
+    "max_leaf_nodes": 27,
+    "min_samples_leaf": 83,
+    "l2_regularization": 6.780912383071562,
+    "max_iter": 150
+  },
+  "fit_time_seconds": 11.017
+}
